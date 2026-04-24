@@ -55,20 +55,14 @@ def safe_float(value: Any) -> float | None:
         return None
 
 
-def calculate_bmi_category(height_cm: Any, weight_kg: Any) -> str:
+def calculate_bmi_value(height_cm: Any, weight_kg: Any) -> str:
     height = safe_float(height_cm)
     weight = safe_float(weight_kg)
     if height is None or weight is None or height <= 0 or weight <= 0:
         return ""
 
     bmi = weight / ((height / 100) ** 2)
-    if bmi < 18.5:
-        return "Underweight"
-    if bmi < 25:
-        return "Normal"
-    if bmi < 30:
-        return "Overweight"
-    return "Obese"
+    return f"{bmi:.2f}"
 
 
 def normalize_payload(payload: dict[str, Any]) -> dict[str, str]:
@@ -103,7 +97,7 @@ def build_placeholder_map(payload: dict[str, str]) -> dict[str, str]:
         "{{add}}": payload["address"],
         "{{ht}}": payload["height_cm"],
         "{{wt}}": payload["weight_kg"],
-        "{{cat}}": calculate_bmi_category(payload["height_cm"], payload["weight_kg"]),
+        "{{cat}}": calculate_bmi_value(payload["height_cm"], payload["weight_kg"]),
         "{{pul}}": payload["pulse"],
         "{{bp}}": payload["bp"],
         "{{rr}}": payload["rr"],
