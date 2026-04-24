@@ -1,0 +1,17 @@
+[Unit]
+Description=Mallika Hospital Flask Report Service
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/mallika-form
+Environment="PORT=8000"
+Environment="FLASK_DEBUG=0"
+ExecStart=/var/www/mallika-form/.venv/bin/gunicorn -c /var/www/mallika-form/gunicorn.conf.py wsgi:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

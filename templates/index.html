@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mallika Hospital | Clinical Assessment Form</title>
+  <style>
+    :root {
+      --bg-top: #ebf4ff;
+      --bg-bottom: #d7e8fb;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: #ffffff;
+      --ink: #123252;
+      --muted: #5b7595;
+      --line: rgba(29, 78, 137, 0.14);
+      --primary: #0f4c97;
+      --primary-strong: #0a3c77;
+      --primary-soft: #dcebff;
+      --success: #0f766e;
+      --danger: #b91c1c;
+      --shadow: 0 24px 60px rgba(10, 60, 119, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 18px 42px;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .hero-card,
+    .hero-aside,
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.64);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 28px 30px;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -110px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 65%);
+      pointer-events: none;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .seal {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary) 0%, #1d73d0 100%);
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      box-shadow: 0 16px 28px rgba(15, 76, 151, 0.25);
+    }
+
+    .brand-copy small {
+      display: block;
+      color: var(--muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 1.45rem;
+      letter-spacing: 0.01em;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2.15rem, 4vw, 3.5rem);
+      line-height: 0.98;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      max-width: 12ch;
+    }
+
+    .hero-card p {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.7;
+    }
+
+    .hero-aside {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .aside-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(220, 235, 255, 0.95);
+      color: var(--primary-strong);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .aside-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .aside-item {
+      padding: 14px 15px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(15, 76, 151, 0.08);
+    }
+
+    .aside-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.98rem;
+    }
+
+    .aside-item span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .panel {
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 251, 255, 0.95));
+    }
+
+    form {
+      padding: 28px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 1.45rem;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .quick-meta {
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-bottom: 26px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      color: var(--primary-strong);
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, var(--primary));
+      box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.12);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px 15px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      color: var(--ink);
+      font: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 6px 20px rgba(18, 50, 82, 0.03);
+    }
+
+    textarea {
+      min-height: 118px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: rgba(15, 76, 151, 0.65);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding-top: 6px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #1761bc 0%, var(--primary) 42%, var(--primary-strong) 100%);
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      box-shadow: 0 18px 34px rgba(15, 76, 151, 0.28);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.72;
+      cursor: wait;
+      transform: none;
+    }
+
+    .status {
+      min-height: 24px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: var(--success);
+    }
+
+    .result-wrap {
+      padding: 22px 28px 26px;
+      border-top: 1px solid rgba(29, 78, 137, 0.08);
+      background: linear-gradient(180deg, rgba(230, 241, 255, 0.6), rgba(255, 255, 255, 0.9));
+    }
+
+    .result {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .result.show {
+      display: flex;
+    }
+
+    .result strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .result span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .result a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--primary-strong);
+      font-weight: 800;
+      text-decoration: none;
+      border: 1px solid rgba(15, 76, 151, 0.14);
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        padding: 18px 14px 28px;
+      }
+
+      form,
+      .result-wrap,
+      .hero-card,
+      .hero-aside {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="brand-row">
+          <div class="seal">MH</div>
+          <div class="brand-copy">
+            <small>Mallika Hospital</small>
+            <strong>Clinical Assessment Desk</strong>
+          </div>
+        </div>
+        <h1>Professional patient report intake</h1>
+        <p>Capture patient details, vitals, and clinical impression in one place. The report service automatically prepares the final document using the hospital’s approved template and current date.</p>
+      </div>
+
+      <aside class="hero-aside">
+        <div class="aside-tag">Hospital Workflow</div>
+        <div class="aside-list">
+          <div class="aside-item">
+            <strong>Patient information</strong>
+            <span>Designed for front-desk and clinical teams with a clean, fast entry layout.</span>
+          </div>
+          <div class="aside-item">
+            <strong>Vitals and BMI</strong>
+            <span>Height, weight, and BMI category are handled automatically during report creation.</span>
+          </div>
+          <div class="aside-item">
+            <strong>Template output</strong>
+            <span>Formatted around the existing Mallika Hospital report template and download workflow.</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <form id="reportForm">
+        <div class="panel-head">
+          <div>
+            <h2>Mallika Hospital Report Form</h2>
+            <p>Fill the patient profile and clinical measurements below.</p>
+          </div>
+          <div class="quick-meta">Secure internal hospital use</div>
+        </div>
+
+        <section class="section">
+          <div class="section-title">Patient Profile</div>
+          <div class="grid">
+            <div class="field">
+              <label for="name">Patient Name</label>
+              <input id="name" name="name" type="text" placeholder="Suneel Raju" required>
+            </div>
+
+            <div class="field">
+              <label for="age">Age</label>
+              <input id="age" name="age" type="number" min="0" placeholder="32" required>
+            </div>
+
+            <div class="field">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender" required>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="number">Mobile Number</label>
+              <input id="number" name="number" type="tel" inputmode="numeric" pattern="\d{10}" maxlength="10" placeholder="9876543210" required>
+              <span class="helper">Enter exactly 10 digits.</span>
+            </div>
+
+            <div class="field full">
+              <label for="address">Address</label>
+              <textarea id="address" name="address" placeholder="House number, street, area, city"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Vitals And Measurements</div>
+          <div class="grid">
+            <div class="field">
+              <label for="height_cm">Height (cm)</label>
+              <input id="height_cm" name="height_cm" type="number" min="0" step="0.1" placeholder="175" required>
+            </div>
+
+            <div class="field">
+              <label for="weight_kg">Weight (kg)</label>
+              <input id="weight_kg" name="weight_kg" type="number" min="0" step="0.1" placeholder="75" required>
+            </div>
+
+            <div class="field">
+              <label for="pulse">Pulse</label>
+              <input id="pulse" name="pulse" type="number" min="0" placeholder="72">
+            </div>
+
+            <div class="field">
+              <label for="bp">Blood Pressure</label>
+              <input id="bp" name="bp" type="text" placeholder="120/80">
+            </div>
+
+            <div class="field">
+              <label for="rr">Respiratory Rate</label>
+              <input id="rr" name="rr" type="number" min="0" placeholder="16">
+            </div>
+
+            <div class="field">
+              <label for="temp">Temperature</label>
+              <input id="temp" name="temp" type="number" step="0.1" placeholder="98.6">
+            </div>
+
+            <div class="field">
+              <label for="blood_sugar">Blood Sugar</label>
+              <input id="blood_sugar" name="blood_sugar" type="number" min="0" step="0.1" placeholder="95">
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Clinical Note</div>
+          <div class="grid">
+            <div class="field full">
+              <label for="impression">Impression</label>
+              <textarea id="impression" name="impression" placeholder="Patient is stable"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button id="submitBtn" type="submit">Create Clinical Report</button>
+          <div id="status" class="status">Ready to prepare the patient report.</div>
+        </div>
+      </form>
+
+      <div class="result-wrap">
+        <div id="result" class="result">
+          <div>
+            <strong>Report prepared successfully.</strong>
+            <span>The latest patient document is ready for download.</span>
+          </div>
+          <a id="downloadLink" href="#" target="_blank" rel="noopener">Download Report</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("reportForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusEl = document.getElementById("status");
+    const resultEl = document.getElementById("result");
+    const downloadLink = document.getElementById("downloadLink");
+
+    function setStatus(message, type = "") {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`.trim();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      resultEl.classList.remove("show");
+      submitBtn.disabled = true;
+      setStatus("Preparing report...");
+
+      const formData = new FormData(form);
+      const payload = {};
+
+      for (const [key, value] of formData.entries()) {
+        payload[key] = typeof value === "string" ? value.trim() : value;
+      }
+
+      ["age", "height_cm", "weight_kg", "pulse", "rr", "temp", "blood_sugar"].forEach((key) => {
+        if (payload[key] === "") {
+          delete payload[key];
+          return;
+        }
+        payload[key] = Number(payload[key]);
+      });
+
+      try {
+        const response = await fetch("/generate-report", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Report generation failed");
+        }
+
+        downloadLink.href = data.pdf_url;
+        resultEl.classList.add("show");
+        setStatus("Report ready for download.", "success");
+      } catch (error) {
+        setStatus(error.message || "Something went wrong while preparing the report.", "error");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
