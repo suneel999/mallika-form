@@ -42,16 +42,7 @@
       padding: 28px 18px 42px;
     }
 
-    .hero {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1.3fr 0.7fr;
-      gap: 22px;
-      margin-bottom: 22px;
-    }
-
-    .hero-card,
-    .hero-aside,
+    .hero,
     .panel {
       border: 1px solid rgba(255, 255, 255, 0.55);
       border-radius: 28px;
@@ -60,27 +51,16 @@
       box-shadow: var(--shadow);
     }
 
-    .hero-card {
-      padding: 28px 30px;
-      overflow: hidden;
-    }
-
-    .hero-card::after {
-      content: "";
-      position: absolute;
-      inset: auto -80px -110px auto;
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 65%);
-      pointer-events: none;
+    .hero {
+      margin-bottom: 22px;
+      padding: 24px 28px;
     }
 
     .brand-row {
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 18px;
+      justify-content: center;
     }
 
     .seal {
@@ -112,69 +92,6 @@
       letter-spacing: 0.01em;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2.15rem, 4vw, 3.5rem);
-      line-height: 0.98;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      max-width: 12ch;
-    }
-
-    .hero-card p {
-      margin: 0;
-      max-width: 58ch;
-      color: var(--muted);
-      font-size: 1.02rem;
-      line-height: 1.7;
-    }
-
-    .hero-aside {
-      padding: 24px;
-      display: grid;
-      gap: 14px;
-      align-content: start;
-    }
-
-    .aside-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(220, 235, 255, 0.95);
-      color: var(--primary-strong);
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .aside-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .aside-item {
-      padding: 14px 15px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(15, 76, 151, 0.08);
-    }
-
-    .aside-item strong {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 0.98rem;
-    }
-
-    .aside-item span {
-      color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.5;
-    }
-
     .panel {
       overflow: hidden;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 251, 255, 0.95));
@@ -187,31 +104,14 @@
     .panel-head {
       display: flex;
       align-items: end;
-      justify-content: space-between;
-      gap: 14px;
+      justify-content: center;
       margin-bottom: 24px;
-      flex-wrap: wrap;
     }
 
     .panel-head h2 {
       margin: 0;
       font-size: 1.45rem;
       letter-spacing: -0.02em;
-    }
-
-    .panel-head p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 0.96rem;
-    }
-
-    .quick-meta {
-      padding: 10px 14px;
-      border-radius: 18px;
-      background: var(--primary-soft);
-      color: var(--primary-strong);
-      font-size: 0.9rem;
-      font-weight: 600;
     }
 
     .section {
@@ -382,12 +282,6 @@
       border: 1px solid rgba(15, 76, 151, 0.14);
     }
 
-    @media (max-width: 920px) {
-      .hero {
-        grid-template-columns: 1fr;
-      }
-    }
-
     @media (max-width: 760px) {
       .shell {
         padding: 18px 14px 28px;
@@ -395,8 +289,7 @@
 
       form,
       .result-wrap,
-      .hero-card,
-      .hero-aside {
+      .hero {
         padding-left: 18px;
         padding-right: 18px;
       }
@@ -407,48 +300,22 @@
     }
   </style>
 </head>
-<body>
+  <body>
   <main class="shell">
     <section class="hero">
-      <div class="hero-card">
-        <div class="brand-row">
-          <div class="seal">MH</div>
-          <div class="brand-copy">
-            <small>Mallika Hospital</small>
-            <strong>Clinical Assessment Desk</strong>
-          </div>
+      <div class="brand-row">
+        <div class="seal">MH</div>
+        <div class="brand-copy">
+          <small>Mallika Hospitals</small>
+          <strong>Mallika Hospitals</strong>
         </div>
-        <h1>Professional patient report intake</h1>
-        <p>Capture patient details, vitals, and clinical impression in one place. The report service automatically prepares the final document using the hospital’s approved template and current date.</p>
       </div>
-
-      <aside class="hero-aside">
-        <div class="aside-tag">Hospital Workflow</div>
-        <div class="aside-list">
-          <div class="aside-item">
-            <strong>Patient information</strong>
-            <span>Designed for front-desk and clinical teams with a clean, fast entry layout.</span>
-          </div>
-          <div class="aside-item">
-            <strong>Vitals and BMI</strong>
-            <span>Height, weight, and BMI category are handled automatically during report creation.</span>
-          </div>
-          <div class="aside-item">
-            <strong>Template output</strong>
-            <span>Formatted around the existing Mallika Hospital report template and download workflow.</span>
-          </div>
-        </div>
-      </aside>
     </section>
 
     <section class="panel">
       <form id="reportForm">
         <div class="panel-head">
-          <div>
-            <h2>Mallika Hospital Report Form</h2>
-            <p>Fill the patient profile and clinical measurements below.</p>
-          </div>
-          <div class="quick-meta">Secure internal hospital use</div>
+          <h2>Patient Report Form</h2>
         </div>
 
         <section class="section">
@@ -456,7 +323,7 @@
           <div class="grid">
             <div class="field">
               <label for="name">Patient Name</label>
-              <input id="name" name="name" type="text" placeholder="Suneel Raju" required>
+              <input id="name" name="name" type="text" required>
             </div>
 
             <div class="field">
