@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mallika Hospitals | {% if mode == "register" %}Create Account{% else %}Login{% endif %}</title>
+  <style>
+    :root {
+      --bg-top: #ebf4ff;
+      --bg-bottom: #d7e8fb;
+      --ink: #123252;
+      --muted: #5b7595;
+      --line: rgba(29, 78, 137, 0.14);
+      --primary: #0f4c97;
+      --primary-strong: #0a3c77;
+      --danger: #b91c1c;
+      --panel: rgba(255, 255, 255, 0.92);
+      --shadow: 0 24px 60px rgba(10, 60, 119, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: min(100%, 460px);
+      background: var(--panel);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      padding: 30px 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .seal {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary) 0%, #1d73d0 100%);
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .brand-copy {
+      text-align: center;
+    }
+
+    .brand-copy small {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .brand-copy strong {
+      font-size: 1.4rem;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 15px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      font: inherit;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: rgba(15, 76, 151, 0.65);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.16);
+    }
+
+    .error {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(185, 28, 28, 0.08);
+      color: var(--danger);
+      font-size: 0.95rem;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #1761bc 0%, var(--primary) 42%, var(--primary-strong) 100%);
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .foot {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    a {
+      color: var(--primary-strong);
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <section class="card">
+    <div class="brand">
+      <div class="seal">MH</div>
+      <div class="brand-copy">
+        <small>Mallika Hospitals</small>
+        <strong>Mallika Hospitals</strong>
+      </div>
+    </div>
+
+    <h1>{% if mode == "register" %}Create Account{% else %}Login{% endif %}</h1>
+    <p class="subtitle">
+      {% if mode == "register" %}
+        Account creation requires the hospital registration key.
+      {% else %}
+        Sign in to access the patient report dashboard.
+      {% endif %}
+    </p>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div>
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required>
+      </div>
+
+      <div>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="{% if mode == 'register' %}new-password{% else %}current-password{% endif %}" required>
+      </div>
+
+      {% if mode == "register" %}
+        <div>
+          <label for="confirm_password">Confirm Password</label>
+          <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+        </div>
+
+        <div>
+          <label for="registration_secret">Registration Key</label>
+          <input id="registration_secret" name="registration_secret" type="password" required>
+        </div>
+      {% endif %}
+
+      <button type="submit">{% if mode == "register" %}Create Account{% else %}Login{% endif %}</button>
+    </form>
+
+    <div class="foot">
+      {% if mode == "register" %}
+        Already have an account? <a href="{{ url_for('login') }}">Login</a>
+      {% elif registration_enabled %}
+        Need an account? <a href="{{ url_for('register') }}">Create one</a>
+      {% endif %}
+    </div>
+  </section>
+</body>
+</html>

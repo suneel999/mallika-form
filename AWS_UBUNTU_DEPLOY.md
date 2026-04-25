@@ -62,11 +62,25 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## 7. Test the app directly
+## 7. Create the auth environment file
+
+Create `/etc/mallika-form.env`:
+
+```bash
+sudo tee /etc/mallika-form.env > /dev/null <<'EOF'
+APP_SECRET_KEY=replace-with-a-long-random-secret
+REGISTRATION_SECRET=replace-with-hospital-registration-key
+EOF
+sudo chmod 600 /etc/mallika-form.env
+```
+
+## 8. Test the app directly
 
 ```bash
 export PORT=8000
 export FLASK_DEBUG=0
+export APP_SECRET_KEY=replace-with-a-long-random-secret
+export REGISTRATION_SECRET=replace-with-hospital-registration-key
 python3 app.py
 ```
 
@@ -78,7 +92,7 @@ curl http://127.0.0.1:8000/health
 
 Stop the app after the health check works.
 
-## 8. Create a systemd service
+## 9. Create a systemd service
 
 Create `/etc/systemd/system/mallika-form.service`:
 
@@ -91,6 +105,7 @@ After=network.target
 User=ubuntu
 Group=ubuntu
 WorkingDirectory=/var/www/mallika-form
+EnvironmentFile=-/etc/mallika-form.env
 Environment="PORT=8000"
 Environment="FLASK_DEBUG=0"
 ExecStart=/var/www/mallika-form/.venv/bin/gunicorn -c /var/www/mallika-form/gunicorn.conf.py wsgi:app
@@ -110,7 +125,7 @@ sudo systemctl start mallika-form
 sudo systemctl status mallika-form
 ```
 
-## 9. Configure Nginx
+## 10. Configure Nginx
 
 Create `/etc/nginx/sites-available/mallika-form`:
 
@@ -140,7 +155,7 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-## 10. Add HTTPS with Certbot
+## 11. Add HTTPS with Certbot
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
@@ -153,7 +168,7 @@ Check renewal:
 sudo certbot renew --dry-run
 ```
 
-## 11. Update the app later
+## 12. Update the app later
 
 ```bash
 cd /var/www/mallika-form
@@ -163,9 +178,10 @@ pip install -r requirements.txt
 sudo systemctl restart mallika-form
 ```
 
-## 12. Important production notes
+## 13. Important production notes
 
 - Save and close `template.docx` before uploading or pushing changes.
 - Make sure `{{add}}` is actually saved in the template before deploying.
 - Ubuntu uses LibreOffice for PDF generation, not Microsoft Word.
 - For the closest PDF match, upload any custom template fonts into the repo `fonts/` folder before deploying.
+- Keep `/etc/mallika-form.env` private because it contains the app session secret and the registration key.

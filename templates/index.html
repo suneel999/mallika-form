@@ -60,7 +60,34 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      justify-content: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .brand-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .user-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(220, 235, 255, 0.95);
+      color: var(--primary-strong);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .logout-form {
+      margin: 0;
     }
 
     .seal {
@@ -226,6 +253,18 @@
       transform: none;
     }
 
+    .logout-btn {
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--primary-strong);
+      border: 1px solid rgba(15, 76, 151, 0.14);
+      box-shadow: none;
+    }
+
+    .logout-btn:hover {
+      background: #fff;
+    }
+
     .status {
       min-height: 24px;
       font-size: 0.95rem;
@@ -302,12 +341,24 @@
 </head>
   <body>
   <main class="shell">
+    <input id="csrfToken" type="hidden" value="{{ csrf_token() }}">
+
     <section class="hero">
       <div class="brand-row">
-        <div class="seal">MH</div>
-        <div class="brand-copy">
-          <small>Mallika Hospitals</small>
-          <strong>Mallika Hospitals</strong>
+        <div class="brand-main">
+          <div class="seal">MH</div>
+          <div class="brand-copy">
+            <small>Mallika Hospitals</small>
+            <strong>Mallika Hospitals</strong>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <div class="user-chip">{{ current_user["username"] }}</div>
+          <form class="logout-form" method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="logout-btn" type="submit">Logout</button>
+          </form>
         </div>
       </div>
     </section>
@@ -428,6 +479,7 @@
     const statusEl = document.getElementById("status");
     const resultEl = document.getElementById("result");
     const downloadLink = document.getElementById("downloadLink");
+    const csrfToken = document.getElementById("csrfToken").value;
 
     function setStatus(message, type = "") {
       statusEl.textContent = message;
@@ -459,12 +511,17 @@
         const response = await fetch("/generate-report", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
           },
           body: JSON.stringify(payload)
         });
 
         const data = await response.json();
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
         if (!response.ok) {
           throw new Error(data.message || "Report generation failed");
         }

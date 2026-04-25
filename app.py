@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-import logging
 import os
 import re
+import secrets
+import logging
 import shutil
+import sqlite3
 import subprocess
 import sys
 from datetime import datetime
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
 from docx import Document
 from docx.oxml.ns import qn
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 
 try:
     from docx2pdf import convert as docx2pdf_convert
@@ -25,6 +29,7 @@ TEMPLATE_PATH = BASE_DIR / "template.docx"
 OUTPUT_DIR = BASE_DIR / "output"
 OUTPUT_DOCX = OUTPUT_DIR / "report.docx"
 OUTPUT_PDF = OUTPUT_DIR / "report.pdf"
+DATABASE_PATH = BASE_DIR / "mallika_auth.db"
 DOCX2PDF_TIMEOUT_SECONDS = 60
 PHONE_PATTERN = re.compile(r"^\d{10}$")
 LIBREOFFICE_CANDIDATES = (
@@ -35,6 +40,84 @@ LIBREOFFICE_CANDIDATES = (
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
+app.config["SECRET_KEY"] = os.getenv("APP_SECRET_KEY", "mallika-change-this-secret-key")
+app.config["REGISTRATION_SECRET"] = os.getenv("REGISTRATION_SECRET", "")
+
+
+def get_db() -> sqlite3.Connection:
+    if "db" not in g:
+        database = sqlite3.connect(DATABASE_PATH)
+        database.row_factory = sqlite3.Row
+        g.db = database
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(_exc: BaseException | None) -> None:
+    database = g.pop("db", None)
+    if database is not None:
+        database.close()
+
+
+def init_db() -> None:
+    db = get_db()
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    db.commit()
+
+
+def get_or_create_csrf_token() -> str:
+    token = session.get("_csrf_token")
+    if not token:
+        token = secrets.token_hex(32)
+        session["_csrf_token"] = token
+    return token
+
+
+def is_valid_csrf(token: str | None) -> bool:
+    session_token = session.get("_csrf_token")
+    return bool(token and session_token and secrets.compare_digest(token, session_token))
+
+
+def fetch_current_user() -> sqlite3.Row | None:
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+    return get_db().execute("SELECT id, username, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+
+
+@app.before_request
+def load_current_user() -> None:
+    g.current_user = fetch_current_user()
+
+
+@app.context_processor
+def inject_template_helpers() -> dict[str, Any]:
+    return {
+        "csrf_token": get_or_create_csrf_token,
+        "current_user": getattr(g, "current_user", None),
+        "registration_enabled": bool(app.config["REGISTRATION_SECRET"]),
+    }
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if getattr(g, "current_user", None) is None:
+            if request.is_json or request.path == "/generate-report":
+                return jsonify({"status": "error", "message": "Authentication required"}), 401
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    return wrapped_view
 
 
 def stringify(value: Any) -> str:
@@ -388,8 +471,99 @@ def generate_report_files(payload: dict[str, str]) -> tuple[Path, Path]:
     return output_docx, output_pdf
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if getattr(g, "current_user", None) is not None:
+        return redirect(url_for("index"))
+
+    error = ""
+    if request.method == "POST":
+        if not is_valid_csrf(request.form.get("csrf_token")):
+            error = "Session expired. Reload the page and try again."
+        else:
+            username = stringify(request.form.get("username"))
+            password = request.form.get("password") or ""
+            user = get_db().execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+
+            if user and check_password_hash(user["password_hash"], password):
+                session.clear()
+                session["user_id"] = user["id"]
+                session["username"] = user["username"]
+                session["_csrf_token"] = secrets.token_hex(32)
+                return redirect(url_for("index"))
+
+            error = "Invalid username or password."
+
+    return render_template("auth.html", mode="login", error=error)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if getattr(g, "current_user", None) is not None:
+        return redirect(url_for("index"))
+
+    if not app.config["REGISTRATION_SECRET"]:
+        return (
+            render_template(
+                "auth.html",
+                mode="register",
+                error="Registration is disabled until REGISTRATION_SECRET is configured on the server.",
+            ),
+            503,
+        )
+
+    error = ""
+    if request.method == "POST":
+        if not is_valid_csrf(request.form.get("csrf_token")):
+            error = "Session expired. Reload the page and try again."
+        else:
+            username = stringify(request.form.get("username"))
+            password = request.form.get("password") or ""
+            confirm_password = request.form.get("confirm_password") or ""
+            registration_secret = request.form.get("registration_secret") or ""
+            db = get_db()
+
+            if registration_secret != app.config["REGISTRATION_SECRET"]:
+                error = "Invalid registration key."
+            elif not username:
+                error = "Username is required."
+            elif len(password) < 8:
+                error = "Password must be at least 8 characters."
+            elif password != confirm_password:
+                error = "Passwords do not match."
+            elif db.execute("SELECT 1 FROM users WHERE username = ?", (username,)).fetchone():
+                error = "Username already exists."
+            else:
+                created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                cursor = db.execute(
+                    "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+                    (username, generate_password_hash(password), created_at),
+                )
+                db.commit()
+                session.clear()
+                session["user_id"] = cursor.lastrowid
+                session["username"] = username
+                session["_csrf_token"] = secrets.token_hex(32)
+                return redirect(url_for("index"))
+
+    return render_template("auth.html", mode="register", error=error)
+
+
+@app.post("/logout")
+@login_required
+def logout():
+    if not is_valid_csrf(request.form.get("csrf_token")):
+        return "Invalid security token", 400
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.post("/generate-report")
+@login_required
 def generate_report():
+    if not is_valid_csrf(request.headers.get("X-CSRF-Token")):
+        return jsonify({"status": "error", "message": "Invalid or missing security token"}), 403
+
     payload = request.get_json(silent=True)
     if payload is None or not isinstance(payload, dict):
         return (
@@ -418,6 +592,7 @@ def generate_report():
 
 
 @app.get("/download/<path:filename>")
+@login_required
 def download_file(filename: str):
     safe_name = Path(filename).name
     file_path = OUTPUT_DIR / safe_name
@@ -427,6 +602,7 @@ def download_file(filename: str):
 
 
 @app.get("/")
+@login_required
 def index():
     return render_template("index.html")
 
@@ -439,6 +615,10 @@ def health():
             "message": "Mallika Hospital report service is ready",
         }
     )
+
+
+with app.app_context():
+    init_db()
 
 
 if __name__ == "__main__":

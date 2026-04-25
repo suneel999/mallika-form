@@ -6,7 +6,9 @@ __pycache__/
 .venv/
 env/
 venv/
+.env
 output/*
 !output/.gitkeep
 ~$*.docx
 ~WRL*.tmp
+mallika_auth.db

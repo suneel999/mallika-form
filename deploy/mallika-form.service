@@ -6,6 +6,7 @@ After=network.target
 User=ubuntu
 Group=ubuntu
 WorkingDirectory=/var/www/mallika-form
+EnvironmentFile=-/etc/mallika-form.env
 Environment="PORT=8000"
 Environment="FLASK_DEBUG=0"
 ExecStart=/var/www/mallika-form/.venv/bin/gunicorn -c /var/www/mallika-form/gunicorn.conf.py wsgi:app
@@ -14,4 +15,3 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-
