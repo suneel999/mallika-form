@@ -4,6 +4,8 @@ import os
 import re
 import secrets
 import logging
+import csv
+import io
 import shutil
 import sqlite3
 import subprocess
@@ -15,7 +17,7 @@ from typing import Any
 
 from docx import Document
 from docx.oxml.ns import qn
-from flask import Flask, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, Response, g, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 try:
@@ -67,10 +69,50 @@ def init_db() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            is_admin INTEGER NOT NULL DEFAULT 0
         )
         """
     )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS report_submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            patient_name TEXT NOT NULL,
+            patient_number TEXT,
+            patient_address TEXT,
+            patient_age TEXT,
+            patient_gender TEXT,
+            height_cm TEXT,
+            weight_kg TEXT,
+            bmi_value TEXT,
+            pulse TEXT,
+            bp TEXT,
+            rr TEXT,
+            temp TEXT,
+            blood_sugar TEXT,
+            impression TEXT,
+            report_docx TEXT NOT NULL,
+            report_pdf TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """
+    )
+    user_columns = {row["name"] for row in db.execute("PRAGMA table_info(users)").fetchall()}
+    if "is_admin" not in user_columns:
+        db.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+
+    report_columns = {row["name"] for row in db.execute("PRAGMA table_info(report_submissions)").fetchall()}
+    if "username" not in report_columns:
+        db.execute("ALTER TABLE report_submissions ADD COLUMN username TEXT NOT NULL DEFAULT ''")
+
+    if not db.execute("SELECT 1 FROM users WHERE is_admin = 1 LIMIT 1").fetchone():
+        first_user = db.execute("SELECT id FROM users ORDER BY id LIMIT 1").fetchone()
+        if first_user:
+            db.execute("UPDATE users SET is_admin = 1 WHERE id = ?", (first_user["id"],))
     db.commit()
 
 
@@ -91,7 +133,10 @@ def fetch_current_user() -> sqlite3.Row | None:
     user_id = session.get("user_id")
     if not user_id:
         return None
-    return get_db().execute("SELECT id, username, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+    return get_db().execute(
+        "SELECT id, username, created_at, is_admin FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
 
 
 @app.before_request
@@ -115,6 +160,17 @@ def login_required(view):
             if request.is_json or request.path == "/generate-report":
                 return jsonify({"status": "error", "message": "Authentication required"}), 401
             return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
+
+def admin_required(view):
+    @wraps(view)
+    @login_required
+    def wrapped_view(*args, **kwargs):
+        if not getattr(g, "current_user", None) or not g.current_user["is_admin"]:
+            return "Admin access required", 403
         return view(*args, **kwargs)
 
     return wrapped_view
@@ -471,6 +527,111 @@ def generate_report_files(payload: dict[str, str]) -> tuple[Path, Path]:
     return output_docx, output_pdf
 
 
+def record_report_submission(
+    user: sqlite3.Row,
+    payload: dict[str, str],
+    output_docx: Path,
+    output_pdf: Path,
+) -> None:
+    created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    db = get_db()
+    db.execute(
+        """
+        INSERT INTO report_submissions (
+            user_id,
+            username,
+            created_at,
+            patient_name,
+            patient_number,
+            patient_address,
+            patient_age,
+            patient_gender,
+            height_cm,
+            weight_kg,
+            bmi_value,
+            pulse,
+            bp,
+            rr,
+            temp,
+            blood_sugar,
+            impression,
+            report_docx,
+            report_pdf
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user["id"],
+            user["username"],
+            created_at,
+            payload["name"],
+            payload["number"],
+            payload["address"],
+            payload["age"],
+            payload["gender"],
+            payload["height_cm"],
+            payload["weight_kg"],
+            calculate_bmi_value(payload["height_cm"], payload["weight_kg"]),
+            payload["pulse"],
+            payload["bp"],
+            payload["rr"],
+            payload["temp"],
+            payload["blood_sugar"],
+            payload["impression"],
+            output_docx.name,
+            output_pdf.name,
+        ),
+    )
+    db.commit()
+
+
+def build_admin_summary() -> dict[str, Any]:
+    db = get_db()
+    total_users = db.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"]
+    total_forms = db.execute("SELECT COUNT(*) AS count FROM report_submissions").fetchone()["count"]
+    total_patients = db.execute(
+        "SELECT COUNT(DISTINCT NULLIF(TRIM(patient_number), '')) AS count FROM report_submissions"
+    ).fetchone()["count"]
+    latest_rows = db.execute(
+        """
+        SELECT
+            id,
+            username,
+            created_at,
+            patient_name,
+            patient_number,
+            patient_address,
+            patient_age,
+            patient_gender,
+            bmi_value
+        FROM report_submissions
+        ORDER BY id DESC
+        LIMIT 100
+        """
+    ).fetchall()
+    user_rows = db.execute(
+        """
+        SELECT
+            username,
+            is_admin,
+            created_at,
+            (
+                SELECT COUNT(*)
+                FROM report_submissions rs
+                WHERE rs.user_id = users.id
+            ) AS forms_count
+        FROM users
+        ORDER BY is_admin DESC, username COLLATE NOCASE ASC
+        """
+    ).fetchall()
+    return {
+        "total_users": total_users,
+        "total_forms": total_forms,
+        "total_patients": total_patients,
+        "submissions": latest_rows,
+        "users": user_rows,
+    }
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if getattr(g, "current_user", None) is not None:
@@ -536,8 +697,13 @@ def register():
             else:
                 created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
                 cursor = db.execute(
-                    "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-                    (username, generate_password_hash(password), created_at),
+                    "INSERT INTO users (username, password_hash, created_at, is_admin) VALUES (?, ?, ?, ?)",
+                    (
+                        username,
+                        generate_password_hash(password),
+                        created_at,
+                        0 if db.execute("SELECT 1 FROM users LIMIT 1").fetchone() else 1,
+                    ),
                 )
                 db.commit()
                 session.clear()
@@ -578,7 +744,8 @@ def generate_report():
 
     try:
         normalized_payload = normalize_payload(payload)
-        _, pdf_path = generate_report_files(normalized_payload)
+        docx_path, pdf_path = generate_report_files(normalized_payload)
+        record_report_submission(g.current_user, normalized_payload, docx_path, pdf_path)
     except ValueError as exc:
         return jsonify({"status": "error", "message": str(exc)}), 400
     except FileNotFoundError as exc:
@@ -605,6 +772,76 @@ def download_file(filename: str):
 @login_required
 def index():
     return render_template("index.html")
+
+
+@app.get("/admin")
+@admin_required
+def admin_dashboard():
+    return render_template("admin.html", **build_admin_summary())
+
+
+@app.get("/admin/export.csv")
+@admin_required
+def admin_export_csv():
+    rows = get_db().execute(
+        """
+        SELECT
+            created_at,
+            username,
+            patient_name,
+            patient_number,
+            patient_address,
+            patient_age,
+            patient_gender,
+            height_cm,
+            weight_kg,
+            bmi_value,
+            pulse,
+            bp,
+            rr,
+            temp,
+            blood_sugar,
+            impression,
+            report_docx,
+            report_pdf
+        FROM report_submissions
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "generated_at",
+            "submitted_by",
+            "patient_name",
+            "patient_number",
+            "patient_address",
+            "patient_age",
+            "patient_gender",
+            "height_cm",
+            "weight_kg",
+            "bmi_value",
+            "pulse",
+            "bp",
+            "rr",
+            "temp",
+            "blood_sugar",
+            "impression",
+            "report_docx",
+            "report_pdf",
+        ]
+    )
+    for row in rows:
+        writer.writerow([row[column] for column in row.keys()])
+
+    filename = f"mallika-report-export-{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/health")

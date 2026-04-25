@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mallika Hospitals | Admin Dashboard</title>
+  <style>
+    :root {
+      --bg-top: #ebf4ff;
+      --bg-bottom: #d7e8fb;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: #ffffff;
+      --ink: #123252;
+      --muted: #5b7595;
+      --line: rgba(29, 78, 137, 0.14);
+      --primary: #0f4c97;
+      --primary-strong: #0a3c77;
+      --shadow: 0 24px 60px rgba(10, 60, 119, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 28px 18px 42px;
+    }
+
+    .hero,
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.64);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      margin-bottom: 22px;
+      padding: 24px 28px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .seal {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary) 0%, #1d73d0 100%);
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      box-shadow: 0 16px 28px rgba(15, 76, 151, 0.25);
+    }
+
+    .brand-copy small {
+      display: block;
+      color: var(--muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 1.45rem;
+      letter-spacing: 0.01em;
+    }
+
+    .hero-copy h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.9rem, 3vw, 2.6rem);
+      letter-spacing: -0.03em;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .chip,
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--primary-strong);
+      border: 1px solid rgba(15, 76, 151, 0.14);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .stat-card,
+    .panel {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 251, 255, 0.95));
+    }
+
+    .stat-card {
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: clamp(2rem, 4vw, 2.7rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .panel {
+      padding: 22px;
+      margin-bottom: 22px;
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .panel-head h2 {
+      margin: 0 0 4px;
+      font-size: 1.35rem;
+    }
+
+    .panel-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    td {
+      font-size: 0.95rem;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(220, 235, 255, 0.95);
+      color: var(--primary-strong);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="brand-row">
+        <div class="brand-main">
+          <div class="seal">MH</div>
+          <div>
+            <div class="brand-copy">
+              <small>Mallika Hospitals</small>
+              <strong>Mallika Hospitals</strong>
+            </div>
+            <div class="hero-copy">
+              <h1>Admin Dashboard</h1>
+              <p>Track users, generated forms, and patient submission details from one secure place.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <div class="chip">{{ current_user["username"] }}</div>
+          <a class="nav-link" href="{{ url_for('index') }}">Back To Form</a>
+          <a class="nav-link" href="{{ url_for('admin_export_csv') }}">Export CSV</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">{{ total_users }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Forms Generated</div>
+        <div class="stat-value">{{ total_forms }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Patients With Mobile Number</div>
+        <div class="stat-value">{{ total_patients }}</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>User Activity</h2>
+          <p>See how many forms each user has completed.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th>Forms Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td>{{ user["username"] }}</td>
+                <td>
+                  {% if user["is_admin"] %}
+                    <span class="tag">Admin</span>
+                  {% else %}
+                    <span class="muted">User</span>
+                  {% endif %}
+                </td>
+                <td>{{ user["created_at"] }}</td>
+                <td>{{ user["forms_count"] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Recent Patient Forms</h2>
+          <p>Latest submissions with patient details and who created them.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Submitted At</th>
+              <th>Submitted By</th>
+              <th>Name</th>
+              <th>Number</th>
+              <th>Address</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>BMI</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for submission in submissions %}
+              <tr>
+                <td>{{ submission["created_at"] }}</td>
+                <td>{{ submission["username"] }}</td>
+                <td>{{ submission["patient_name"] }}</td>
+                <td>{{ submission["patient_number"] or "-" }}</td>
+                <td>{{ submission["patient_address"] or "-" }}</td>
+                <td>{{ submission["patient_age"] or "-" }}</td>
+                <td>{{ submission["patient_gender"] or "-" }}</td>
+                <td>{{ submission["bmi_value"] or "-" }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="8" class="muted">No forms have been generated yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

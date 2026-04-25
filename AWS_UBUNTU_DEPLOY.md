@@ -185,3 +185,5 @@ sudo systemctl restart mallika-form
 - Ubuntu uses LibreOffice for PDF generation, not Microsoft Word.
 - For the closest PDF match, upload any custom template fonts into the repo `fonts/` folder before deploying.
 - Keep `/etc/mallika-form.env` private because it contains the app session secret and the registration key.
+- The first account created through `/register` becomes the admin automatically.
+- Admins can open `/admin` to see user counts, form counts, patient details, and export the report log as CSV for Excel or Google Sheets.

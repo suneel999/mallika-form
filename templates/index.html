@@ -90,6 +90,19 @@
       margin: 0;
     }
 
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--primary-strong);
+      border: 1px solid rgba(15, 76, 151, 0.14);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
     .seal {
       width: 58px;
       height: 58px;
@@ -354,6 +367,9 @@
         </div>
 
         <div class="hero-actions">
+          {% if current_user["is_admin"] %}
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+          {% endif %}
           <div class="user-chip">{{ current_user["username"] }}</div>
           <form class="logout-form" method="post" action="{{ url_for('logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
