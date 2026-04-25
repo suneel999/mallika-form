@@ -109,10 +109,12 @@ def init_db() -> None:
     if "username" not in report_columns:
         db.execute("ALTER TABLE report_submissions ADD COLUMN username TEXT NOT NULL DEFAULT ''")
 
-    if not db.execute("SELECT 1 FROM users WHERE is_admin = 1 LIMIT 1").fetchone():
-        first_user = db.execute("SELECT id FROM users ORDER BY id LIMIT 1").fetchone()
-        if first_user:
-            db.execute("UPDATE users SET is_admin = 1 WHERE id = ?", (first_user["id"],))
+    admin_exists = db.execute("SELECT 1 FROM users WHERE is_admin = 1 LIMIT 1").fetchone()
+    total_users = db.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"]
+    if not admin_exists and total_users == 1:
+        only_user = db.execute("SELECT id FROM users ORDER BY id LIMIT 1").fetchone()
+        if only_user:
+            db.execute("UPDATE users SET is_admin = 1 WHERE id = ?", (only_user["id"],))
     db.commit()
 
 
@@ -696,13 +698,14 @@ def register():
                 error = "Username already exists."
             else:
                 created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                no_admin_exists = not db.execute("SELECT 1 FROM users WHERE is_admin = 1 LIMIT 1").fetchone()
                 cursor = db.execute(
                     "INSERT INTO users (username, password_hash, created_at, is_admin) VALUES (?, ?, ?, ?)",
                     (
                         username,
                         generate_password_hash(password),
                         created_at,
-                        0 if db.execute("SELECT 1 FROM users LIMIT 1").fetchone() else 1,
+                        1 if no_admin_exists else 0,
                     ),
                 )
                 db.commit()

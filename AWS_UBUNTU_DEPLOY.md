@@ -187,3 +187,4 @@ sudo systemctl restart mallika-form
 - Keep `/etc/mallika-form.env` private because it contains the app session secret and the registration key.
 - The first account created through `/register` becomes the admin automatically.
 - Admins can open `/admin` to see user counts, form counts, patient details, and export the report log as CSV for Excel or Google Sheets.
+- If you need to replace the current admin, delete that username with `python3 manage_users.py delete-user OLD_USERNAME`, then register a new account. If no admin exists, the next new registration becomes admin automatically.
