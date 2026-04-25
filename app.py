@@ -25,6 +25,12 @@ try:
 except ImportError:  # pragma: no cover - optional dependency at runtime
     docx2pdf_convert = None
 
+try:
+    from pypdf import PdfReader, PdfWriter
+except ImportError:  # pragma: no cover - optional dependency at runtime
+    PdfReader = None
+    PdfWriter = None
+
 
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATE_PATH = BASE_DIR / "template.docx"
@@ -502,6 +508,57 @@ def convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
     raise RuntimeError("PDF conversion failed. " + " | ".join(conversion_errors))
 
 
+def pdf_page_has_visible_content(page: Any) -> bool:
+    try:
+        text = page.extract_text() or ""
+    except Exception:
+        text = ""
+
+    if text.strip():
+        return True
+
+    try:
+        resources = page.get("/Resources")
+        if resources:
+            xobjects = resources.get("/XObject")
+            if xobjects:
+                for candidate in xobjects.values():
+                    xobject = candidate.get_object()
+                    if xobject.get("/Subtype") in {"/Image", "/Form"}:
+                        return True
+    except Exception:
+        return True
+
+    return False
+
+
+def trim_trailing_blank_pdf_pages(pdf_path: Path) -> None:
+    if PdfReader is None or PdfWriter is None or not pdf_path.exists():
+        return
+
+    try:
+        reader = PdfReader(str(pdf_path))
+    except Exception as exc:
+        app.logger.warning("Could not inspect PDF for blank trailing pages: %s", exc)
+        return
+
+    keep_pages = len(reader.pages)
+    while keep_pages > 1 and not pdf_page_has_visible_content(reader.pages[keep_pages - 1]):
+        keep_pages -= 1
+
+    if keep_pages == len(reader.pages):
+        return
+
+    writer = PdfWriter()
+    for index in range(keep_pages):
+        writer.add_page(reader.pages[index])
+
+    with pdf_path.open("wb") as pdf_file:
+        writer.write(pdf_file)
+
+    app.logger.info("Removed %s blank trailing PDF page(s) from %s", len(reader.pages) - keep_pages, pdf_path.name)
+
+
 def build_output_paths() -> tuple[Path, Path]:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     return OUTPUT_DIR / f"report_{stamp}.docx", OUTPUT_DIR / f"report_{stamp}.pdf"
@@ -525,6 +582,7 @@ def generate_report_files(payload: dict[str, str]) -> tuple[Path, Path]:
     replace_placeholders(document, build_placeholder_map(payload))
     document.save(str(output_docx))
     convert_docx_to_pdf(output_docx, output_pdf)
+    trim_trailing_blank_pdf_pages(output_pdf)
     refresh_latest_copies(output_docx, output_pdf)
     return output_docx, output_pdf
 
